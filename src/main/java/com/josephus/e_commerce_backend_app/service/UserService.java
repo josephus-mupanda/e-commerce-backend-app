@@ -1,13 +1,12 @@
 package com.josephus.com.ecommercebackend.service;
 
-import com.josephus.com.ecommercebackend.model.ConfirmationToken;
-import com.josephus.com.ecommercebackend.model.PasswordResetToken;
-import com.josephus.com.ecommercebackend.model.Users;
+import com.josephus.e_commerce_backend_app.common.domains.ConfirmationToken;
+import com.josephus.e_commerce_backend_app.common.domains.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.model.Users;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 //import org.json.JSONException;
-import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 public interface UserService extends UserDetailsService {

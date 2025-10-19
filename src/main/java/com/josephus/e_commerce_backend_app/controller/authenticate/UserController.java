@@ -1,9 +1,9 @@
 package com.josephus.com.ecommercebackend.controller.authenticate;
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
-import com.josephus.com.ecommercebackend.model.ConfirmationToken;
-import com.josephus.com.ecommercebackend.model.ContactRequest;
-import com.josephus.com.ecommercebackend.model.PasswordResetToken;
-import com.josephus.com.ecommercebackend.model.Users;
+import com.josephus.e_commerce_backend_app.common.domains.ConfirmationToken;
+import com.josephus.e_commerce_backend_app.common.domains.ContactRequest;
+import com.josephus.e_commerce_backend_app.common.domains.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.model.Users;
 import com.josephus.com.ecommercebackend.service.UserService;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;

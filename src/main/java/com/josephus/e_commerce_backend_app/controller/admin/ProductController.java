@@ -1,10 +1,10 @@
 package com.josephus.com.ecommercebackend.controller.admin;
 
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
-import com.josephus.com.ecommercebackend.model.Product;
+import com.josephus.e_commerce_backend_app.product.models.Product;
 import com.josephus.com.ecommercebackend.model.UserRole;
-import com.josephus.com.ecommercebackend.model.Users;
-import com.josephus.com.ecommercebackend.service.ProductService;
+import com.josephus.e_commerce_backend_app.model.Users;
+import com.josephus.e_commerce_backend_app.product.services.ProductService;
 import com.josephus.com.ecommercebackend.service.UserService;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;

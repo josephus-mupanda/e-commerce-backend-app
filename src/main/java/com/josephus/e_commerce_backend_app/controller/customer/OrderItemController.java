@@ -1,10 +1,10 @@
 package com.josephus.com.ecommercebackend.controller.customer;
-import com.josephus.com.ecommercebackend.model.Order;
-import com.josephus.com.ecommercebackend.model.OrderItem;
-import com.josephus.com.ecommercebackend.model.Product;
-import com.josephus.com.ecommercebackend.service.OrderItemService;
-import com.josephus.com.ecommercebackend.service.OrderService;
-import com.josephus.com.ecommercebackend.service.ProductService;
+import com.josephus.e_commerce_backend_app.order.models.Order;
+import com.josephus.e_commerce_backend_app.order_item.models.OrderItem;
+import com.josephus.e_commerce_backend_app.product.models.Product;
+import com.josephus.e_commerce_backend_app.order_item.services.OrderItemService;
+import com.josephus.e_commerce_backend_app.order.services.OrderService;
+import com.josephus.e_commerce_backend_app.product.services.ProductService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

@@ -1,6 +1,5 @@
 package com.josephus.com.ecommercebackend.controller.customer;
-import com.josephus.com.ecommercebackend.model.Category;
-import com.josephus.com.ecommercebackend.service.CategoryService;
+import com.josephus.e_commerce_backend_app.category.models.Category;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

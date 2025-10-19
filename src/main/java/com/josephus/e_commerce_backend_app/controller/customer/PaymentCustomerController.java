@@ -1,7 +1,7 @@
 package com.josephus.com.ecommercebackend.controller.customer;
 
-import com.josephus.com.ecommercebackend.model.Payment;
-import com.josephus.com.ecommercebackend.service.PaymentService;
+import com.josephus.e_commerce_backend_app.payment.models.Payment;
+import com.josephus.e_commerce_backend_app.payment.services.PaymentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

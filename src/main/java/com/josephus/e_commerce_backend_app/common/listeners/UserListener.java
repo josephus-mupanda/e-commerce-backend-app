@@ -1,7 +1,7 @@
 package com.josephus.e_commerce_backend_app.common.listeners;
 
-import com.josephus.com.ecommercebackend.model.Users;
-import com.josephus.com.ecommercebackend.service.LogService;
+import com.josephus.e_commerce_backend_app.model.Users;
+import com.josephus.e_commerce_backend_app.common.service.LogService;
 
 import jakarta.servlet.http.*;
 import org.springframework.beans.factory.annotation.Autowired;

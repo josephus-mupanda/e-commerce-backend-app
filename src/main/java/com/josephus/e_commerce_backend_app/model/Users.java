@@ -1,4 +1,4 @@
-package com.josephus.com.ecommercebackend.model;
+package com.josephus.e_commerce_backend_app.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;

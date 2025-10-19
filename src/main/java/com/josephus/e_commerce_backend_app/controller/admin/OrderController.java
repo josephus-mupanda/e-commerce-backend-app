@@ -1,9 +1,9 @@
 package com.josephus.com.ecommercebackend.controller.admin;
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
-import com.josephus.com.ecommercebackend.model.Order;
+import com.josephus.e_commerce_backend_app.order.models.Order;
 import com.josephus.com.ecommercebackend.model.UserRole;
-import com.josephus.com.ecommercebackend.model.Users;
-import com.josephus.com.ecommercebackend.service.OrderService;
+import com.josephus.e_commerce_backend_app.model.Users;
+import com.josephus.e_commerce_backend_app.order.services.OrderService;
 import com.josephus.com.ecommercebackend.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

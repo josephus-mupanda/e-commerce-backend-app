@@ -1,16 +1,18 @@
 package com.josephus.e_commerce_backend_app.common.models;
 
+import com.josephus.e_commerce_backend_app.category.models.Category;
 import com.josephus.e_commerce_backend_app.common.domains.BasicEntity;
 import com.josephus.e_commerce_backend_app.common.domains.Role;
 import com.josephus.e_commerce_backend_app.common.enums.UserType;
+import com.josephus.e_commerce_backend_app.payment.models.Payment;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
-import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+
 @Getter
 @Setter
 @Builder
@@ -31,9 +33,6 @@ public class User extends BasicEntity {
     @Column(name = "password_hash", nullable = false, length = 255)
     private String passwordHash;
 
-    @Column(name = "is_active", nullable = false)
-    private Boolean isActive = true;
-
     @Column(name = "is_admin", nullable = false)
     private Boolean isAdmin = false;
 
@@ -50,13 +49,16 @@ public class User extends BasicEntity {
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
 
-//    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-//    @Builder.Default
-//    private Set<Task> tasks = new HashSet<>();
+    @Column(nullable = false)
+    @Builder.Default
+    private Boolean enabled = true;
 
-    @Column(name = "password_reset_token")
-    private String passwordResetToken;
+    // Relationships
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<Category> categories = new HashSet<>();
 
-    @Column(name = "password_reset_token_expiration")
-    private LocalDateTime passwordResetTokenExpiration;
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private Set<Payment> paymentMethods = new HashSet<>();
 }

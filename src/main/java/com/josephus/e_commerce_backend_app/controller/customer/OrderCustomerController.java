@@ -2,7 +2,7 @@ package com.josephus.com.ecommercebackend.controller.customer;
 
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
 import com.josephus.com.ecommercebackend.model.*;
-import com.josephus.com.ecommercebackend.service.OrderService;
+import com.josephus.e_commerce_backend_app.order.services.OrderService;
 import com.josephus.com.ecommercebackend.service.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
