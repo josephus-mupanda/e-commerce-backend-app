@@ -1,5 +1,5 @@
 package com.josephus.com.ecommercebackend.controller.authenticate;
-import com.josephus.com.ecommercebackend.listeners.UserListener;
+import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
 import com.josephus.com.ecommercebackend.model.ConfirmationToken;
 import com.josephus.com.ecommercebackend.model.ContactRequest;
 import com.josephus.com.ecommercebackend.model.PasswordResetToken;

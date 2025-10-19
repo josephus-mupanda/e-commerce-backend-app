@@ -1,4 +1,4 @@
-package com.josephus.com.ecommercebackend.listeners;
+package com.josephus.e_commerce_backend_app.common.listeners;
 
 import com.josephus.com.ecommercebackend.model.Users;
 import com.josephus.com.ecommercebackend.service.LogService;
