@@ -231,10 +231,31 @@ public class UserServiceImpl implements UserService {
         return jwtUtil.extractUsername(token);
     }
 
+    @Override
+    public User getUserByUsername(String username) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        return userOptional.orElse(null);
+    }
+
+
     // Helper to get userId from token
     private String extractUserIdFromToken(String token) {
         String email = jwtUtil.extractUsername(token);
         User user = getUserByEmail(email);
         return user != null ? user.getId() : null;
     }
+
+    @Override
+    public User getUserFromToken(String bearerToken) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
+            return null;
+        }
+        String token = bearerToken.substring(7); // remove "Bearer " prefix
+        String username = jwtUtil.extractUsername(token);
+        if (username == null) return null;
+
+        Optional<User> optionalUser = userRepository.findByEmail(username);
+        return optionalUser.orElse(null);
+    }
+
 }

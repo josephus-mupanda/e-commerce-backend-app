@@ -10,8 +10,7 @@ public final class AuthDTO {
     public record RegisterRequest(
             @NotBlank String username,
             @NotBlank @Email String email,
-            @NotBlank String password,
-            @NotBlank String phoneNumber
+            @NotBlank String password
     ) {}
 
     public record LoginRequest(

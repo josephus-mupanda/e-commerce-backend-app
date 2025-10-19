@@ -44,4 +44,8 @@ public interface UserService extends UserDetailsService {
     User getUserByEmail(String email);
     User getUserById(String adminId);
     String encodePassword(String rawPassword);
+
+    User getUserByUsername(String username);
+
+    User getUserFromToken(String bearerToken);
 }

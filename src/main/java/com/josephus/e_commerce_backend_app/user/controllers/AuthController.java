@@ -49,14 +49,13 @@ public class AuthController {
     @PublicEndpoint
     @Operation(summary = "Register a new user")
     @PostMapping("/register")
-    public ResponseEntity<GenericResponse<UserDTO>> register(
+    public ResponseEntity<GenericResponse<UserDTO.Output>> register(
             @Valid @RequestBody AuthDTO.RegisterRequest request
     ) {
         if (userService.hasUserWithUsername(request.username())) throw new ConflictException("Username exists");
         if (userService.hasUserWithEmail(request.email())) throw new ConflictException("Email exists");
-        if (userService.hasUserWithPhoneNumber(request.phoneNumber())) throw new ConflictException("Phone exists");
 
-        User user = userService.registerUser(request.username(), request.email(), request.password(), request.phoneNumber());
+        User user = userService.registerUser(request.username(), request.email(), request.password());
         ConfirmationToken token = userService.createConfirmationToken(user);
 
         // Send numeric code to email
@@ -64,7 +63,7 @@ public class AuthController {
 
         userListener.logUserAction(user, "CREATE_USER");
 
-        UserDTO userDTO = userMapper.toDTO(user);
+        UserDTO.Output  userDTO = userMapper.toDTO(user);
         return GenericResponse.created("User registered successfully", userDTO);
 
     }
@@ -84,7 +83,7 @@ public class AuthController {
 
         User loggedInUser = userService.getUserByUsername(request.username());
 
-        if (!loggedInUser.isEnabled()) {
+        if (!loggedInUser.getEnabled()) {
             throw new ForbiddenException("Email not confirmed");
         }
 
