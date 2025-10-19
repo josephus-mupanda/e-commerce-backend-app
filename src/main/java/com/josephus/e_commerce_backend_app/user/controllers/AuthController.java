@@ -7,15 +7,17 @@ import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
 import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
 import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import com.josephus.e_commerce_backend_app.common.responses.GenericResponse;
-import com.josephus.e_commerce_backend_app.model.Users;
+import com.josephus.e_commerce_backend_app.common.services.EmailSenderService;
 import com.josephus.e_commerce_backend_app.user.dtos.AuthDTO;
 import com.josephus.e_commerce_backend_app.user.dtos.UserDTO;
 import com.josephus.e_commerce_backend_app.user.mappers.UserMapper;
+import com.josephus.e_commerce_backend_app.user.models.User;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,16 +27,21 @@ import java.util.Date;
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Endpoints for user registration, login, and account management")
 public class AuthController {
-
     private final UserService userService;
     private final UserListener userListener;
     private final UserMapper userMapper;
+    private final EmailSenderService emailSenderService;
+    @Value("${frontend.base.url}")
+    private String url ;
+    @Value("${mail.admin.address}")
+    private String adminEmail;
 
     @Autowired
-    public AuthController(UserService userService, UserListener userListener, UserMapper userMapper) {
+    public AuthController(UserService userService, UserListener userListener, UserMapper userMapper, EmailSenderService emailSenderService) {
         this.userService = userService;
         this.userListener = userListener;
         this.userMapper = userMapper;
+        this.emailSenderService = emailSenderService;
     }
 
     // ==================== REGISTER ====================
@@ -54,7 +61,7 @@ public class AuthController {
             throw new ConflictException("Phone number already exists");
         }
 
-        Users registeredUser = userService.registerUser(
+        User registeredUser = userService.registerUser(
                 request.username(),
                 request.email(),
                 request.password(),
@@ -86,7 +93,7 @@ public class AuthController {
             throw new UnauthorizedException("Invalid username or password");
         }
 
-        Users loggedInUser = userService.getUserByUsername(request.username());
+        User loggedInUser = userService.getUserByUsername(request.username());
 
         if (!loggedInUser.isEnabled()) {
             throw new ForbiddenException("Email not confirmed");
@@ -106,7 +113,7 @@ public class AuthController {
     public ResponseEntity<GenericResponse<String>> logout(
             @RequestHeader("Authorization") String bearerToken
     ) {
-        Users user = userService.getUserFromToken(bearerToken);
+        User user = userService.getUserFromToken(bearerToken);
         if (user == null) {
             throw new BadRequestException("No valid token provided");
         }
@@ -129,7 +136,7 @@ public class AuthController {
             throw new BadRequestException("Invalid or expired token");
         }
 
-        Users user = token.getUser();
+        User user = token.getUser();
         user.setEnabled(true);
         userService.saveUser(user);
         userService.deleteConfirmationToken(token);
@@ -144,7 +151,7 @@ public class AuthController {
     public ResponseEntity<GenericResponse<String>> resetPassword(
             @RequestBody AuthDTO.ResetPasswordRequest request
     ) {
-        Users user = userService.getUserByEmail(request.email());
+        User user = userService.getUserByEmail(request.email());
         if (user == null) {
             throw new NotFoundException("Email address not found");
         }
@@ -168,8 +175,8 @@ public class AuthController {
             throw new BadRequestException("Invalid or expired token");
         }
 
-        Users user = resetToken.getUser();
-        user.setPassword(userService.encodePassword(request.password()));
+        User user = resetToken.getUser();
+        user.setPasswordHash(userService.encodePassword(request.password()));
         userService.saveUser(user);
         userService.deletePasswordResetToken(resetToken);
 

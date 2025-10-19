@@ -17,10 +17,14 @@ public interface UserService extends UserDetailsService {
     Boolean hasUserWithUsername(String username);
 //    ResponseEntity<?> authenticate(String username, String password) throws JSONException;
 
+    Boolean hasUserWithPhoneNumber(String phoneNumber);
+
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
     List<User> getAllUsers();
     User registerUser(String username, String email, String password);
+
+    String extractUsernameFromToken(String token);
 
     ConfirmationToken createConfirmationToken(User user);
     ConfirmationToken getConfirmationToken(String token);
@@ -30,10 +34,11 @@ public interface UserService extends UserDetailsService {
     PasswordResetToken getPasswordResetToken(String token);
     void deletePasswordResetToken(PasswordResetToken token);
 
+    String verify(User user);
+
     User loginUser(String email, String password);
     void saveUser(User user);
     User getUserByEmail(String email);
     User getUserById(String adminId);
-
     String encodePassword(String rawPassword);
 }

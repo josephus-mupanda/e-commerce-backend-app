@@ -3,10 +3,14 @@ package com.josephus.e_commerce_backend_app.user.services.impl;
 import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
+import com.josephus.e_commerce_backend_app.common.utils.JwtUtil;
 import com.josephus.e_commerce_backend_app.user.models.User;
 import com.josephus.e_commerce_backend_app.user.repositories.UserRepository;
 import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
 import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
@@ -14,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Service
@@ -21,6 +26,8 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
 
     private final PasswordEncoder bCryptPasswordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     @Autowired
     private ConfirmationTokenRepository confirmationTokenRepository;
@@ -28,21 +35,28 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder ) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
         this.userRepository = userRepository;
         this.bCryptPasswordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
-    public final String TOKEN_PREFIX = "Bearer ";
-    public final String HEADER_STRING = "Authorization";
+//    public final String TOKEN_PREFIX = "Bearer ";
+//    public final String HEADER_STRING = "Authorization";
 
-    public Boolean hasUserWithEmail(String email){
-        return userRepository.findFirstByEmail(email).isPresent();
-
+    @Override
+    public Boolean hasUserWithUsername(String username) {
+        return userRepository.findByUsername(username).isPresent();
     }
 
-    public Boolean hasUserWithUsername(String username){
-        return userRepository.findFirstByUsername(username).isPresent();
+    @Override
+    public Boolean hasUserWithEmail(String email) {
+        return userRepository.findByEmail(email).isPresent();
+    }
 
+    @Override
+    public Boolean hasUserWithPhoneNumber(String phoneNumber) {
+        return userRepository.findByPhoneNumber(phoneNumber).isPresent();
     }
 
     @Override
@@ -79,18 +93,46 @@ public class UserServiceImpl implements UserService {
         user.setRoles(UserType.CUSTOMER);
         return userRepository.save(user);
     }
+    @Override
+    public String verify(User user){
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(
+                        user.getUsername(),user.getPasswordHash()
+                )
+        );
+        if(authentication.isAuthenticated())
+            return jwtUtil.generateToken(user);
+        return "Failed";
+    }
+
+    @Override
+    public User loginUser(String email, String password) {
+
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isPresent() && bCryptPasswordEncoder.matches(password, userOptional.get().getPasswordHash())) {
+            return userOptional.get(); // Login successful
+        } else {
+            return null; // Login failed
+        }
+
+    }
+
+    @Override
+    public String extractUsernameFromToken(String token) {
+        return jwtUtil.extractUsername(token);
+    }
 
     //========================= CONFIRMATION  TOKEN ============================
     public ConfirmationToken createConfirmationToken(User user) {
         ConfirmationToken confirmationToken = new ConfirmationToken();
         confirmationToken.setToken(UUID.randomUUID().toString());
         confirmationToken.setUser(user);
-        confirmationToken.setCreatedDate(new Date());
+        confirmationToken.setCreatedDate(LocalDateTime.now());
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.HOUR, 24);  // Token expires in 24 hours
-        confirmationToken.setExpiryDate(calendar.getTime());
+        confirmationToken.setExpiryDate(LocalDateTime.now());
 
         return confirmationTokenRepository.save(confirmationToken);
     }
@@ -114,12 +156,12 @@ public class UserServiceImpl implements UserService {
         PasswordResetToken token = new PasswordResetToken();
         token.setToken(UUID.randomUUID().toString());
         token.setUser(user);
-        token.setCreatedDate(new Date());
+        token.setCreatedDate(LocalDateTime.now());
 
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(new Date());
         calendar.add(Calendar.HOUR, 24);  // Token expires in 24 hours
-        token.setExpiryDate(calendar.getTime());
+        token.setExpiryDate(LocalDateTime.now());
 
         return passwordResetTokenRepository.save(token);
     }
@@ -142,17 +184,6 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-    @Override
-    public User loginUser(String email, String password) {
-
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isPresent() && bCryptPasswordEncoder.matches(password, userOptional.get().getPassword())) {
-            return userOptional.get(); // Login successful
-        } else {
-            return null; // Login failed
-        }
-
-    }
 
     @Override
     public User getUserByEmail(String email) {
