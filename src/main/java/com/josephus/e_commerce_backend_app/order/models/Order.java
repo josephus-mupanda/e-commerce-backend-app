@@ -1,6 +1,6 @@
 package com.josephus.e_commerce_backend_app.order.models;
 
-import com.josephus.e_commerce_backend_app.common.models.User;
+import com.josephus.e_commerce_backend_app.user.models.User;
 import com.josephus.e_commerce_backend_app.order_item.models.OrderItem;
 import com.josephus.e_commerce_backend_app.payment.models.Payment;
 import jakarta.persistence.*;
@@ -13,7 +13,6 @@ import org.hibernate.annotations.SQLRestriction;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.UUID;
 
 @Getter
 @Setter

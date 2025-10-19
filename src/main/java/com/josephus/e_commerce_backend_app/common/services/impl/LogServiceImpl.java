@@ -1,8 +1,8 @@
-package com.josephus.e_commerce_backend_app.common.service.impl;
+package com.josephus.e_commerce_backend_app.common.services.impl;
 
 import com.josephus.e_commerce_backend_app.common.repositories.LogRepository;
-import com.josephus.e_commerce_backend_app.common.service.LogService;
-import com.josephus.e_commerce_backend_app.common.domains.LogResult;
+import com.josephus.e_commerce_backend_app.common.services.LogService;
+import com.josephus.e_commerce_backend_app.common.models.LogResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;

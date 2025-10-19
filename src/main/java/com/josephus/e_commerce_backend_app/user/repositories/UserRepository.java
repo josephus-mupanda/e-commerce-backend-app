@@ -1,4 +1,4 @@
-package com.josephus.com.ecommercebackend.dao;
+package com.josephus.e_commerce_backend_app.user.repositories;
 import com.josephus.e_commerce_backend_app.model.Users;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;

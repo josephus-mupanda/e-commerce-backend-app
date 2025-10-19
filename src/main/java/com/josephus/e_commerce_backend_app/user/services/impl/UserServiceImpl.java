@@ -1,17 +1,17 @@
-package com.josephus.com.ecommercebackend.service.impl;
+package com.josephus.e_commerce_backend_app.user.services.impl;
 
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
-import com.josephus.com.ecommercebackend.dao.UserRepository;
-import com.josephus.e_commerce_backend_app.common.domains.ConfirmationToken;
-import com.josephus.e_commerce_backend_app.common.domains.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.user.repositories.UserRepository;
+import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
+import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import com.josephus.e_commerce_backend_app.model.Users;
 import com.josephus.com.ecommercebackend.model.UserRole;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import com.josephus.com.ecommercebackend.service.UserService;
+import com.josephus.e_commerce_backend_app.user.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

@@ -1,6 +1,6 @@
-package com.josephus.e_commerce_backend_app.common.service.impl;
+package com.josephus.e_commerce_backend_app.common.services.impl;
 
-import com.josephus.e_commerce_backend_app.common.service.EmailSenderService;
+import com.josephus.e_commerce_backend_app.common.services.EmailSenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;

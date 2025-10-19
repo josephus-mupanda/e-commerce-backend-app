@@ -1,4 +1,4 @@
-package com.josephus.e_commerce_backend_app.common.models;
+package com.josephus.e_commerce_backend_app.user.models;
 
 import com.josephus.e_commerce_backend_app.category.models.Category;
 import com.josephus.e_commerce_backend_app.common.domains.BasicEntity;

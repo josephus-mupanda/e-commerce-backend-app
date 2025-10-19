@@ -1,7 +1,7 @@
-package com.josephus.com.ecommercebackend.service;
+package com.josephus.e_commerce_backend_app.user.services;
 
-import com.josephus.e_commerce_backend_app.common.domains.ConfirmationToken;
-import com.josephus.e_commerce_backend_app.common.domains.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
+import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import com.josephus.e_commerce_backend_app.model.Users;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

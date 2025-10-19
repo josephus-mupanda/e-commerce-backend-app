@@ -1,4 +1,5 @@
-package com.josephus.e_commerce_backend_app.common.domains;
+package com.josephus.e_commerce_backend_app.common.models;
+import com.josephus.e_commerce_backend_app.common.domains.BasicEntity;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;

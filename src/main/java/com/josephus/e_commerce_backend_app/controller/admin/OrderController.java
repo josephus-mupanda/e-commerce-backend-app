@@ -4,7 +4,7 @@ import com.josephus.e_commerce_backend_app.order.models.Order;
 import com.josephus.com.ecommercebackend.model.UserRole;
 import com.josephus.e_commerce_backend_app.model.Users;
 import com.josephus.e_commerce_backend_app.order.services.OrderService;
-import com.josephus.com.ecommercebackend.service.UserService;
+import com.josephus.e_commerce_backend_app.user.services.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;

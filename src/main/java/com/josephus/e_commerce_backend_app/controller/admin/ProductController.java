@@ -5,7 +5,7 @@ import com.josephus.e_commerce_backend_app.product.models.Product;
 import com.josephus.com.ecommercebackend.model.UserRole;
 import com.josephus.e_commerce_backend_app.model.Users;
 import com.josephus.e_commerce_backend_app.product.services.ProductService;
-import com.josephus.com.ecommercebackend.service.UserService;
+import com.josephus.e_commerce_backend_app.user.services.UserService;
 import net.coobird.thumbnailator.Thumbnails;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

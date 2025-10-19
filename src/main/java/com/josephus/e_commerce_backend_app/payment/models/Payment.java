@@ -1,6 +1,6 @@
 package com.josephus.e_commerce_backend_app.payment.models;
 
-import com.josephus.e_commerce_backend_app.common.models.User;
+import com.josephus.e_commerce_backend_app.user.models.User;
 import jakarta.persistence.*;
 import com.josephus.e_commerce_backend_app.common.domains.BasicEntity;
 import lombok.*;

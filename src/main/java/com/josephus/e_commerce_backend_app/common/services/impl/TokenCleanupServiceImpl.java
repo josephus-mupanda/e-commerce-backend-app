@@ -1,9 +1,9 @@
-package com.josephus.e_commerce_backend_app.common.service.impl;
+package com.josephus.e_commerce_backend_app.common.services.impl;
 
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
-import com.josephus.e_commerce_backend_app.common.domains.ConfirmationToken;
-import com.josephus.e_commerce_backend_app.common.domains.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
+import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;

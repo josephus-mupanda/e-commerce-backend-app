@@ -1,6 +1,6 @@
-package com.josephus.e_commerce_backend_app.common.service.impl;
+package com.josephus.e_commerce_backend_app.common.services.impl;
 
-import com.josephus.e_commerce_backend_app.common.service.TokenBlacklistService;
+import com.josephus.e_commerce_backend_app.common.services.TokenBlacklistService;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
