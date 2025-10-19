@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 @RestController
@@ -51,33 +52,21 @@ public class AuthController {
     public ResponseEntity<GenericResponse<UserDTO>> register(
             @Valid @RequestBody AuthDTO.RegisterRequest request
     ) {
-        if (userService.hasUserWithUsername(request.username())) {
-            throw new ConflictException("Username already exists");
-        }
-        if (userService.hasUserWithEmail(request.email())) {
-            throw new ConflictException("Email already exists");
-        }
-        if (userService.hasUserWithPhoneNumber(request.phoneNumber())) {
-            throw new ConflictException("Phone number already exists");
-        }
+        if (userService.hasUserWithUsername(request.username())) throw new ConflictException("Username exists");
+        if (userService.hasUserWithEmail(request.email())) throw new ConflictException("Email exists");
+        if (userService.hasUserWithPhoneNumber(request.phoneNumber())) throw new ConflictException("Phone exists");
 
-        User registeredUser = userService.registerUser(
-                request.username(),
-                request.email(),
-                request.password(),
-                request.phoneNumber()
-        );
+        User user = userService.registerUser(request.username(), request.email(), request.password(), request.phoneNumber());
+        ConfirmationToken token = userService.createConfirmationToken(user);
 
-        ConfirmationToken token = userService.createConfirmationToken(registeredUser);
+        // Send numeric code to email
+        emailSenderService.sendEmail(user.getEmail(), "Confirm your account", "Your code is: " + token.getToken());
 
-        // Send confirmation email
-        userService.sendConfirmationEmail(registeredUser, token);
+        userListener.logUserAction(user, "CREATE_USER");
 
-        userListener.logUserAction(registeredUser, "CREATE_USER");
-
-        UserDTO userDTO = userMapper.toDTO(registeredUser);
-
+        UserDTO userDTO = userMapper.toDTO(user);
         return GenericResponse.created("User registered successfully", userDTO);
+
     }
 
     // ==================== LOGIN ====================
@@ -113,12 +102,17 @@ public class AuthController {
     public ResponseEntity<GenericResponse<String>> logout(
             @RequestHeader("Authorization") String bearerToken
     ) {
-        User user = userService.getUserFromToken(bearerToken);
-        if (user == null) {
+        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
             throw new BadRequestException("No valid token provided");
         }
 
-        userService.invalidateToken(bearerToken);
+        String token = bearerToken.substring(7);
+        User user = userService.getUserFromToken(token);
+        if (user == null) {
+            throw new BadRequestException("Invalid token or user not found");
+        }
+        // Add token to blacklist
+        userService.invalidateToken(token);
         userListener.logUserAction(user, "LOGOUT");
 
         return GenericResponse.ok("Logged out successfully");
@@ -129,12 +123,11 @@ public class AuthController {
     @Operation(summary = "Confirm user email")
     @PostMapping("/confirm")
     public ResponseEntity<GenericResponse<String>> confirmUser(
-            @RequestParam("token") String tokenStr
+            @RequestParam("code") String code
     ) {
-        ConfirmationToken token = userService.getConfirmationToken(tokenStr);
-        if (token == null || token.getExpiryDate().before(new Date())) {
-            throw new BadRequestException("Invalid or expired token");
-        }
+        ConfirmationToken token = userService.getConfirmationToken(code);
+        if (token == null || token.getExpiryDate().isBefore(LocalDateTime.now()))
+            throw new BadRequestException("Invalid or expired code");
 
         User user = token.getUser();
         user.setEnabled(true);
@@ -152,14 +145,13 @@ public class AuthController {
             @RequestBody AuthDTO.ResetPasswordRequest request
     ) {
         User user = userService.getUserByEmail(request.email());
-        if (user == null) {
-            throw new NotFoundException("Email address not found");
-        }
+        if (user == null) throw new NotFoundException("Email not found");
 
-        PasswordResetToken resetToken = userService.createPasswordResetToken(user);
-        userService.sendPasswordResetEmail(user, resetToken);
+        PasswordResetToken token = userService.createPasswordResetToken(user);
 
-        return GenericResponse.ok("Password reset link sent, check your email");
+        emailSenderService.sendEmail(user.getEmail(), "Reset your password", "Your reset code is: " + token.getToken());
+
+        return GenericResponse.ok("Password reset code sent to email");
     }
 
     // ==================== CHANGE PASSWORD ====================
@@ -167,18 +159,17 @@ public class AuthController {
     @Operation(summary = "Change password with token")
     @PostMapping("/change-password")
     public ResponseEntity<GenericResponse<String>> changePassword(
-            @RequestParam("token") String tokenStr,
+            @RequestParam("code") String code,
             @RequestBody AuthDTO.ChangePasswordRequest request
     ) {
-        PasswordResetToken resetToken = userService.getPasswordResetToken(tokenStr);
-        if (resetToken == null || resetToken.getExpiryDate().before(new Date())) {
-            throw new BadRequestException("Invalid or expired token");
-        }
+        PasswordResetToken token = userService.getPasswordResetToken(code);
+        if (token == null || token.getExpiryDate().isBefore(LocalDateTime.now()))
+            throw new BadRequestException("Invalid or expired code");
 
-        User user = resetToken.getUser();
+        User user = token.getUser();
         user.setPasswordHash(userService.encodePassword(request.password()));
         userService.saveUser(user);
-        userService.deletePasswordResetToken(resetToken);
+        userService.deletePasswordResetToken(token);
 
         return GenericResponse.ok("Password changed successfully");
     }

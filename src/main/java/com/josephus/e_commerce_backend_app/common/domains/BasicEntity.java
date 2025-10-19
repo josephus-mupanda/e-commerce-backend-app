@@ -1,4 +1,5 @@
 package com.josephus.e_commerce_backend_app.common.domains;
+
 import com.josephus.e_commerce_backend_app.common.annotations.UuidV7;
 import jakarta.persistence.Column;
 import jakarta.persistence.Id;

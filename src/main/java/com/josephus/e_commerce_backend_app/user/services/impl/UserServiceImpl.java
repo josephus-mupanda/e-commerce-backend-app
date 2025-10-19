@@ -1,8 +1,13 @@
 package com.josephus.e_commerce_backend_app.user.services.impl;
 
-import com.josephus.e_commerce_backend_app.common.enums.UserType;
+import com.josephus.e_commerce_backend_app.common.domains.IamUserDetails;
+import com.josephus.e_commerce_backend_app.common.domains.Permission;
+import com.josephus.e_commerce_backend_app.common.domains.Role;
+import com.josephus.e_commerce_backend_app.common.domains.Token;
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
+import com.josephus.e_commerce_backend_app.common.repositories.RoleRepository;
+import com.josephus.e_commerce_backend_app.common.repositories.TokenRepository;
 import com.josephus.e_commerce_backend_app.common.utils.JwtUtil;
 import com.josephus.e_commerce_backend_app.user.models.User;
 import com.josephus.e_commerce_backend_app.user.repositories.UserRepository;
@@ -11,6 +16,7 @@ import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
@@ -20,30 +26,38 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
-
+    private final RoleRepository roleRepository;
     private final PasswordEncoder bCryptPasswordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final ConfirmationTokenRepository confirmationTokenRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final TokenRepository tokenRepository;
 
     @Autowired
-    private ConfirmationTokenRepository confirmationTokenRepository;
-
-    @Autowired
-    private PasswordResetTokenRepository passwordResetTokenRepository;
-
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authenticationManager, JwtUtil jwtUtil) {
+    public UserServiceImpl(UserRepository userRepository,
+                           RoleRepository roleRepository,
+                           PasswordEncoder passwordEncoder,
+                           AuthenticationManager authenticationManager,
+                           JwtUtil jwtUtil,
+                           ConfirmationTokenRepository confirmationTokenRepository,
+                           PasswordResetTokenRepository passwordResetTokenRepository, TokenRepository tokenRepository) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.confirmationTokenRepository = confirmationTokenRepository;
+        this.passwordResetTokenRepository = passwordResetTokenRepository;
+        this.tokenRepository = tokenRepository;
     }
-//    public final String TOKEN_PREFIX = "Bearer ";
-//    public final String HEADER_STRING = "Authorization";
 
+    // -------------------- USER CHECKS --------------------
     @Override
     public Boolean hasUserWithUsername(String username) {
         return userRepository.findByUsername(username).isPresent();
@@ -59,82 +73,105 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByPhoneNumber(phoneNumber).isPresent();
     }
 
+    // -------------------- LOAD USER --------------------
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<User> optionalUser = userRepository.findFirstByUsername(username);
+        User user = userRepository.findFirstByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
 
-        if(optionalUser.isEmpty()) throw  new UsernameNotFoundException("Username not found", null);
+        Set<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+        Set<String> permissions = user.getRoles().stream()
+                .flatMap(r -> r.getPermissions().stream())
+                .map(Permission::getName)
+                .collect(Collectors.toSet());
 
-        return  new org.springframework.security.core
-                .userdetails
-                .User(
-                        optionalUser.get().getEmail(),
-                optionalUser.get().getPasswordHash(),
-                new ArrayList<>()
-        );
+        return IamUserDetails.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .password(user.getPasswordHash())
+                .roles(roles)
+                .permissions(permissions)
+                .isActive(user.getEnabled())
+                .build();
     }
 
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
+    // -------------------- REGISTER USER --------------------
     @Override
     public User registerUser(String username, String email, String password) {
-
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
+        user.setPasswordHash(bCryptPasswordEncoder.encode(password));
+        user.setEnabled(false);
 
-        String encodedPassword = bCryptPasswordEncoder.encode(password);
-        user.setPasswordHash(encodedPassword);
+        Role customerRole = roleRepository.findByName("CUSTOMER")
+                .orElseThrow(() -> new RuntimeException("Role CUSTOMER not found"));
+        user.setRoles(Set.of(customerRole));
 
-        user.setEnabled(false);  // User is not enabled until email confirmation
-        user.setRoles(UserType.CUSTOMER);
         return userRepository.save(user);
     }
+
+    // -------------------- LOGIN --------------------
     @Override
-    public String verify(User user){
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        user.getUsername(),user.getPasswordHash()
-                )
-        );
-        if(authentication.isAuthenticated())
-            return jwtUtil.generateToken(user);
+    public String verify(String email, String rawPassword) {
+        try {
+            Authentication auth = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(email, rawPassword)
+            );
+            if (auth.isAuthenticated()) {
+                User user = getUserByEmail(email);
+                return jwtUtil.generateToken(mapToIamUserDetails(user));
+            }
+        } catch (AuthenticationException ex) {
+            return "Failed";
+        }
         return "Failed";
     }
 
     @Override
-    public User loginUser(String email, String password) {
-
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isPresent() && bCryptPasswordEncoder.matches(password, userOptional.get().getPasswordHash())) {
-            return userOptional.get(); // Login successful
-        } else {
-            return null; // Login failed
-        }
-
+    public void invalidateToken(String token) {
+        // Store token in a blacklist table
+        Token blacklistedToken = new Token();
+        blacklistedToken.setToken(token);
+        blacklistedToken.setUserId(extractUserIdFromToken(token));
+        blacklistedToken.setRevokedAt(LocalDateTime.now());
+        tokenRepository.save(blacklistedToken);
+    }
+    @Override
+    public User getUserByEmail(String email) {
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     @Override
-    public String extractUsernameFromToken(String token) {
-        return jwtUtil.extractUsername(token);
+    public User getUserById(String id) {
+        return userRepository.findById(id).orElse(null);
     }
 
-    //========================= CONFIRMATION  TOKEN ============================
+    @Override
+    public void saveUser(User user) {
+        userRepository.save(user);
+    }
+
+    @Override
+    public String encodePassword(String rawPassword) {
+        return bCryptPasswordEncoder.encode(rawPassword);
+    }
+
+    // -------------------- CONFIRMATION TOKEN --------------------
+    @Override
     public ConfirmationToken createConfirmationToken(User user) {
-        ConfirmationToken confirmationToken = new ConfirmationToken();
-        confirmationToken.setToken(UUID.randomUUID().toString());
-        confirmationToken.setUser(user);
-        confirmationToken.setCreatedDate(LocalDateTime.now());
+        ConfirmationToken token = new ConfirmationToken();
+        token.setUser(user);
+        token.setToken(generateRandomCode());
+        token.setCreatedDate(LocalDateTime.now());
+        token.setExpiryDate(LocalDateTime.now().plusHours(24));
+        return confirmationTokenRepository.save(token);
+    }
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.HOUR, 24);  // Token expires in 24 hours
-        confirmationToken.setExpiryDate(LocalDateTime.now());
-
-        return confirmationTokenRepository.save(confirmationToken);
+    @Override
+    public ConfirmationToken getConfirmationToken(String code) {
+        return confirmationTokenRepository.findByToken(code);
     }
 
     @Override
@@ -142,64 +179,62 @@ public class UserServiceImpl implements UserService {
         confirmationTokenRepository.delete(token);
     }
 
-    public ConfirmationToken getConfirmationToken(String token) {
-        return confirmationTokenRepository.findByToken(token);
-    }
-
-    //=========================================================================
-
-
-    //========================= PASSWORD RESET  TOKEN ============================
-
+    // -------------------- PASSWORD RESET TOKEN --------------------
     @Override
     public PasswordResetToken createPasswordResetToken(User user) {
         PasswordResetToken token = new PasswordResetToken();
-        token.setToken(UUID.randomUUID().toString());
         token.setUser(user);
+        token.setToken(generateRandomCode());
         token.setCreatedDate(LocalDateTime.now());
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(new Date());
-        calendar.add(Calendar.HOUR, 24);  // Token expires in 24 hours
-        token.setExpiryDate(LocalDateTime.now());
-
+        token.setExpiryDate(LocalDateTime.now().plusHours(24));
         return passwordResetTokenRepository.save(token);
     }
 
     @Override
-    public PasswordResetToken getPasswordResetToken(String token) {
-        return passwordResetTokenRepository.findByToken(token);
+    public PasswordResetToken getPasswordResetToken(String code) {
+        return passwordResetTokenRepository.findByToken(code);
     }
 
     @Override
     public void deletePasswordResetToken(PasswordResetToken token) {
         passwordResetTokenRepository.delete(token);
     }
-
-    //=========================================================================
-
-
     @Override
-    public void saveUser(User user) {
-        userRepository.save(user);
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
     }
 
+    // -------------------- HELPER --------------------
+    private IamUserDetails mapToIamUserDetails(User user) {
+        Set<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+        Set<String> permissions = user.getRoles().stream()
+                .flatMap(r -> r.getPermissions().stream())
+                .map(Permission::getName)
+                .collect(Collectors.toSet());
 
-    @Override
-    public User getUserByEmail(String email) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        return userOptional.orElse(null);
-        // return userRepository.findByUsername(email);
+        return IamUserDetails.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .password(user.getPasswordHash())
+                .roles(roles)
+                .permissions(permissions)
+                .isActive(user.getEnabled())
+                .build();
     }
 
+    private String generateRandomCode() {
+        return String.valueOf(100000 + new Random().nextInt(900000)); // 6-digit numeric code
+    }
     @Override
-    public User getUserById(String adminId) {
-        Optional<User> userOptional = userRepository.findById(adminId);
-        return userOptional.orElse(null);
+    public String extractUsernameFromToken(String token) {
+        return jwtUtil.extractUsername(token);
     }
 
-    @Override
-    public String encodePassword(String rawPassword) {
-        return bCryptPasswordEncoder.encode(rawPassword);
+    // Helper to get userId from token
+    private String extractUserIdFromToken(String token) {
+        String email = jwtUtil.extractUsername(token);
+        User user = getUserByEmail(email);
+        return user != null ? user.getId() : null;
     }
 }

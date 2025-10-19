@@ -1,8 +1,8 @@
 package com.josephus.e_commerce_backend_app.common.filters;
 
-import com.example.todo_app.common.service.TokenBlacklistService;
 import com.example.todo_app.common.service.impl.CustomUserDetailsService;
-import com.example.todo_app.common.utils.JwtUtil;
+import com.josephus.e_commerce_backend_app.common.services.TokenBlacklistService;
+import com.josephus.e_commerce_backend_app.common.utils.JwtUtil;
 import io.micrometer.common.lang.NonNull;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
