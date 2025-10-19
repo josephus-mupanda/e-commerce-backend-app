@@ -175,4 +175,10 @@ public class AuthController {
 
         return GenericResponse.ok("Password changed successfully");
     }
+    private void sendMail(String email, String subject, String body) {
+        emailSenderService.sendEmail(email, subject, body);
+    }
+    private void sendMailToAdmin(String fromEmail, String subject, String body) {
+        sendMail(adminEmail, subject, "Message from: " + fromEmail + "\n\n" + body);
+    }
 }
