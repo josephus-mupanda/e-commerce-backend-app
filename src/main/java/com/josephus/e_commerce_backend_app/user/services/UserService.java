@@ -3,6 +3,7 @@ package com.josephus.e_commerce_backend_app.user.services;
 import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
 import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import com.josephus.e_commerce_backend_app.model.Users;
+import com.josephus.e_commerce_backend_app.user.models.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,21 +19,21 @@ public interface UserService extends UserDetailsService {
 
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
-    List<Users> getAllUsers();
-    Users registerUser(String username, String email, String password);
+    List<User> getAllUsers();
+    User registerUser(String username, String email, String password);
 
-    ConfirmationToken createConfirmationToken(Users user);
+    ConfirmationToken createConfirmationToken(User user);
     ConfirmationToken getConfirmationToken(String token);
     void deleteConfirmationToken(ConfirmationToken token);
 
-    PasswordResetToken createPasswordResetToken(Users user);
+    PasswordResetToken createPasswordResetToken(User user);
     PasswordResetToken getPasswordResetToken(String token);
     void deletePasswordResetToken(PasswordResetToken token);
 
-    Users loginUser(String email, String password);
-    void saveUser(Users user);
-    Users getUserByEmail(String email);
-    Users getUserById(Long adminId);
+    User loginUser(String email, String password);
+    void saveUser(User user);
+    User getUserByEmail(String email);
+    User getUserById(String adminId);
 
     String encodePassword(String rawPassword);
 }

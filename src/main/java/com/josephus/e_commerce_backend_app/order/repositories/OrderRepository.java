@@ -6,9 +6,9 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface OrderRepository extends JpaRepository<Order, Long> {
+public interface OrderRepository extends JpaRepository<Order, String> {
     // You can add custom query methods here if needed
-    List<Order> findByUserId(Long userId);
+    List<Order> findByUserId(String userId);
 
     List<Order> findByStatus(String status);
 }

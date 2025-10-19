@@ -25,7 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Payment getPaymentById(Long id) {
+    public Payment getPaymentById(String id) {
         Optional<Payment> optionalPayment = paymentRepository.findById(id);
         return optionalPayment.orElse(null);
     }
@@ -36,13 +36,13 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
-    public Payment updatePayment(Long id, Payment payment) {
+    public Payment updatePayment(String id, Payment payment) {
         payment.setId(id); // Make sure the provided payment has the correct ID
         return paymentRepository.save(payment);
     }
 
     @Override
-    public void deletePayment(Long id) {
+    public void deletePayment(String id) {
         paymentRepository.deleteById(id);
     }
 }

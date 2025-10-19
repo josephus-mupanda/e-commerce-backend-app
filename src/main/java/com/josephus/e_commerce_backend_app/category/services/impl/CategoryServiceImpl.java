@@ -2,6 +2,7 @@ package com.josephus.e_commerce_backend_app.category.services.impl;
 
 import com.josephus.e_commerce_backend_app.category.repositories.CategoryRepository;
 import com.josephus.e_commerce_backend_app.category.models.Category;
+import com.josephus.e_commerce_backend_app.category.services.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import java.util.List;
@@ -18,7 +19,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category getCategoryById(Long id) {
+    public Category getCategoryById(String id) {
         Optional<Category> optionalCategory = categoryRepository.findById(id);
         return optionalCategory.orElse(null);
     }
@@ -29,13 +30,13 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public Category updateCategory(Long id, Category category) {
+    public Category updateCategory(String id, Category category) {
         category.setId(id); // Make sure the provided category has the correct ID
         return categoryRepository.save(category);
     }
 
     @Override
-    public void deleteCategory(Long id) {
+    public void deleteCategory(String id) {
         categoryRepository.deleteById(id);
     }
 }

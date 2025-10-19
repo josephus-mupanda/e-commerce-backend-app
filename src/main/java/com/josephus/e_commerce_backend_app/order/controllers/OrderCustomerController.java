@@ -1,7 +1,6 @@
 package com.josephus.e_commerce_backend_app.order.controllers;
 
 import com.josephus.e_commerce_backend_app.common.annotations.IsAuthenticated;
-import com.josephus.e_commerce_backend_app.common.annotations.PublicEndpoint;
 import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.exceptions.ForbiddenException;
 import com.josephus.e_commerce_backend_app.common.exceptions.NotFoundException;
@@ -12,7 +11,6 @@ import com.josephus.e_commerce_backend_app.order.mappers.OrderMapper;
 import com.josephus.e_commerce_backend_app.order.models.Order;
 import com.josephus.e_commerce_backend_app.order.services.OrderService;
 import com.josephus.e_commerce_backend_app.user.models.User;
-
 import com.josephus.e_commerce_backend_app.user.services.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -69,7 +67,7 @@ public class OrderCustomerController {
     public OrderDTO.Output getOrderById(@PathVariable String id, @RequestHeader("Authorization") String token) {
         User user = getCustomerUser(token);
 
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
 
@@ -94,7 +92,7 @@ public class OrderCustomerController {
 
         User user = getCustomerUser(token);
 
-        List<Order> orders = orderService.getOrdersByStatusForUser(user.getId(), status);
+        List<Order> orders = orderService.getOrdersByStatus(status);
         userListener.logUserAction(user, "Viewed orders by status: " + status);
 
         logger.info("Customer '{}' retrieved orders by status '{}'", user.getUsername(), status);
@@ -135,7 +133,7 @@ public class OrderCustomerController {
             @RequestHeader("Authorization") String token) {
 
         User user = getCustomerUser(token);
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
 
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
@@ -150,7 +148,7 @@ public class OrderCustomerController {
         order.setCity(updatedDTO.city());
         order.setTotalAmount(updatedDTO.totalAmount());
 
-        Order updatedOrder = orderService.updateOrder(order);
+        Order updatedOrder = orderService.updateOrder(id,order);
 
         userListener.logUserAction(user, "Updated order with ID: " + id);
         logger.info("Customer '{}' updated order ID: {}", user.getUsername(), id);
@@ -167,7 +165,7 @@ public class OrderCustomerController {
     public void deleteOrder(@PathVariable String id, @RequestHeader("Authorization") String token) {
         User user = getCustomerUser(token);
 
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
 
@@ -178,23 +176,6 @@ public class OrderCustomerController {
 
         userListener.logUserAction(user, "Cancelled order with ID: " + id);
         logger.info("Customer '{}' cancelled order ID: {}", user.getUsername(), id);
-    }
-
-    /**
-     * Public endpoint: Track order by tracking ID (no login required)
-     */
-    @PublicEndpoint
-    @GetMapping("/track/{trackingId}")
-    @Operation(summary = "Track order", description = "Track your order by tracking ID (no authentication required).")
-    public OrderDTO.Output trackOrder(@PathVariable String trackingId) {
-        Order order = orderService.getOrderByTrackingId(trackingId);
-
-        if (order == null)
-            throw new NotFoundException("No order found for tracking ID: " + trackingId);
-
-        logger.info("Public tracking accessed for order tracking ID: {}", trackingId);
-
-        return OrderMapper.toDTO(order);
     }
 
     /**

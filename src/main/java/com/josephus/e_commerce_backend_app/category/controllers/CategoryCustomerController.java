@@ -44,7 +44,7 @@ public class CategoryCustomerController {
     @PublicEndpoint
     @Operation(summary = "Get category by ID")
     @GetMapping("/{id}")
-    public GenericResponse<CategoryDTO.Output> getCategoryById(@PathVariable Long id) {
+    public GenericResponse<CategoryDTO.Output> getCategoryById(@PathVariable String id) {
         Category category = categoryService.getCategoryById(id);
         if (category == null) {
             throw new NotFoundException("Category not found");

@@ -58,7 +58,7 @@ public class ProductCustomerController {
     @PublicEndpoint
     public ResponseEntity<ProductDTO.Output> getProductById(
             @RequestHeader("Authorization") String token,
-            @PathVariable Long id
+            @PathVariable String id
     ) {
         User user = userService.getAuthenticatedUser(token);
 

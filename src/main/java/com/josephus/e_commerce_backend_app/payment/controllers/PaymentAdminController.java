@@ -1,5 +1,6 @@
 package com.josephus.e_commerce_backend_app.payment.controllers;
 
+import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
 import com.josephus.e_commerce_backend_app.payment.dtos.PaymentDTO;
 import com.josephus.e_commerce_backend_app.payment.mappers.PaymentMapper;
@@ -114,7 +115,7 @@ public class PaymentAdminController {
     // ==================== HELPERS ====================
     private User validateAdmin(String adminId) {
         User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) {
+        if (admin == null || admin.getRole() != UserType.ADMIN) {
             throw new ForbiddenException("Access denied");
         }
         return admin;

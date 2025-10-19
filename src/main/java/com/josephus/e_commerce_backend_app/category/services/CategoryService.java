@@ -5,8 +5,8 @@ import com.josephus.e_commerce_backend_app.category.models.Category;
 
 public interface CategoryService {
     List<Category> getAllCategories();
-    Category getCategoryById(Long id);
+    Category getCategoryById(String id);
     Category createCategory(Category category);
-    Category updateCategory(Long id, Category category);
-    void deleteCategory(Long id);
+    Category updateCategory(String id, Category category);
+    void deleteCategory(String id);
 }

@@ -19,17 +19,17 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Order updateOrder(Long id, Order order) {
+    public Order updateOrder(String id, Order order) {
         order.setId(id);
         return orderRepository.save(order);
     }
     @Override
-    public void deleteOrder(Long id) {
+    public void deleteOrder(String id) {
         orderRepository.deleteById(id);
     }
 
     @Override
-    public Order getOrder(Long orderId) {
+    public Order getOrder(String orderId) {
         return orderRepository.findById(orderId).orElse(null);
     }
 
@@ -44,7 +44,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<Order> getOrdersByUser(Long userId) {
+    public List<Order> getOrdersByUser(String userId) {
         return orderRepository.findByUserId(userId);
     }
 }

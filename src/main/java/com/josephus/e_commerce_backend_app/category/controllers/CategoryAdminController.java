@@ -6,6 +6,7 @@ import com.josephus.e_commerce_backend_app.category.models.Category;
 import com.josephus.e_commerce_backend_app.category.services.CategoryService;
 import com.josephus.e_commerce_backend_app.common.annotations.IsAuthenticated;
 import com.josephus.e_commerce_backend_app.common.annotations.PublicEndpoint;
+import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.exceptions.ForbiddenException;
 import com.josephus.e_commerce_backend_app.common.exceptions.NotFoundException;
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
@@ -72,7 +73,7 @@ public class CategoryAdminController {
             @RequestHeader("X-Admin-Id") String adminId
     ) {
         User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) throw new ForbiddenException("Access denied");
+        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
 
         Category category = CategoryMapper.toEntity(categoryDTO);
         Category created = categoryService.createCategory(category);
@@ -91,7 +92,7 @@ public class CategoryAdminController {
             @RequestHeader("X-Admin-Id") String adminId
     ) {
         User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) throw new ForbiddenException("Access denied");
+        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
 
         Category existing = categoryService.getCategoryById(id);
         if (existing == null) throw new NotFoundException("Category not found");
@@ -113,7 +114,7 @@ public class CategoryAdminController {
             @RequestHeader("X-Admin-Id") String adminId
     ) {
         User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) throw new ForbiddenException("Access denied");
+        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
 
         Category existing = categoryService.getCategoryById(id);
         if (existing == null) throw new NotFoundException("Category not found");
