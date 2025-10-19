@@ -1,5 +1,5 @@
 package com.josephus.e_commerce_backend_app.common.exceptions;
-import com.example.todo_app.common.responses.GenericErrorResponse;
+import com.josephus.e_commerce_backend_app.common.responses.GenericErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
