@@ -70,10 +70,10 @@ public class CategoryAdminController {
     @PostMapping
     public GenericResponse<CategoryDTO.Output> createCategory(
             @RequestBody CategoryDTO.Input categoryDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Category category = CategoryMapper.toEntity(categoryDTO);
         Category created = categoryService.createCategory(category);
@@ -89,10 +89,10 @@ public class CategoryAdminController {
     public GenericResponse<CategoryDTO.Output> updateCategory(
             @PathVariable String id,
             @RequestBody CategoryDTO.Input categoryDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Category existing = categoryService.getCategoryById(id);
         if (existing == null) throw new NotFoundException("Category not found");
@@ -111,10 +111,10 @@ public class CategoryAdminController {
     @DeleteMapping("/{id}")
     public GenericResponse<Void> deleteCategory(
             @PathVariable String id,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserType.ADMIN) throw new ForbiddenException("Access denied");
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Category existing = categoryService.getCategoryById(id);
         if (existing == null) throw new NotFoundException("Category not found");
@@ -123,6 +123,27 @@ public class CategoryAdminController {
         userListener.logUserAction(admin, "Deleted category with ID: " + id);
 
         return new GenericResponse<>("Category deleted successfully", null);
+    }
+
+    // ==================== HELPER ====================
+    private void validateAdminAccess(User user) {
+        if (user == null) {
+            throw new ForbiddenException("User not found or invalid token");
+        }
+
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> {
+                    try {
+                        // convert role name (String) to enum safely
+                        return UserType.valueOf(role.getName().toUpperCase()) == UserType.ADMIN;
+                    } catch (IllegalArgumentException e) {
+                        return false; // ignore roles not matching enum
+                    }
+                });
+
+        if (!isAdmin) {
+            throw new ForbiddenException("Access denied: Admins only");
+        }
     }
 }
 

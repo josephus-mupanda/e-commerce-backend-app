@@ -4,6 +4,7 @@ import com.josephus.e_commerce_backend_app.common.domains.IamUserDetails;
 import com.josephus.e_commerce_backend_app.common.domains.Permission;
 import com.josephus.e_commerce_backend_app.common.domains.Role;
 import com.josephus.e_commerce_backend_app.common.domains.Token;
+import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.RoleRepository;
@@ -105,7 +106,7 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(bCryptPasswordEncoder.encode(password));
         user.setEnabled(false);
 
-        Role customerRole = roleRepository.findByName("CUSTOMER")
+        Role customerRole = roleRepository.findByName(UserType.CUSTOMER.name())
                 .orElseThrow(() -> new RuntimeException("Role CUSTOMER not found"));
         user.setRoles(Set.of(customerRole));
 

@@ -2,6 +2,8 @@ package com.josephus.e_commerce_backend_app.common.services.impl;
 
 import com.josephus.e_commerce_backend_app.common.services.EmailSenderService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
@@ -11,12 +13,22 @@ public class EmailSenderImpl implements EmailSenderService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Value("${app.mail.from}")
+    private String fromEmail;
+
     public void sendEmail(String toEmail, String subject, String body){
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setFrom("josephusmupanda48@gmail.com");
-        message.setTo(toEmail);
-        message.setText(body);
-        message.setSubject(subject);
-        mailSender.send(message);
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom(fromEmail);
+            message.setTo(toEmail);
+            message.setText(body);
+            message.setSubject(subject);
+
+            mailSender.send(message);
+        } catch (MailException ex) {
+            // handle exception gracefully
+            // log it, maybe throw a custom exception
+            throw new RuntimeException("Failed to send email to " + toEmail, ex);
+        }
     }
 }

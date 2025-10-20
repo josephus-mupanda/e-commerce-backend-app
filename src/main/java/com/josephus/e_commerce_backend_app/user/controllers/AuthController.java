@@ -22,7 +22,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -99,13 +98,8 @@ public class AuthController {
     @Operation(summary = "Logout a user")
     @PostMapping("/logout")
     public ResponseEntity<GenericResponse<String>> logout(
-            @RequestHeader("Authorization") String bearerToken
+            @RequestHeader("Authorization") String token
     ) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            throw new BadRequestException("No valid token provided");
-        }
-
-        String token = bearerToken.substring(7);
         User user = userService.getUserFromToken(token);
         if (user == null) {
             throw new BadRequestException("Invalid token or user not found");

@@ -19,9 +19,7 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/customer/categories")
 @Tag(name = "Categories", description = "Customer endpoints to access product categories")
 public class CategoryCustomerController {
-
     private final CategoryService categoryService;
-
     @Autowired
     public CategoryCustomerController(CategoryService categoryService) {
         this.categoryService = categoryService;
