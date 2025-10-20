@@ -1,7 +1,6 @@
 version: "3.3"
 
 services:
-
   postgres:
     image: postgres:16.4-alpine3.20
     container_name: e-commerce-postgres
@@ -9,8 +8,6 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: ${DATABASE_NAME}
-      POSTGRES_APP_USER: ${DATABASE_USERNAME}
-      POSTGRES_APP_PASSWORD: ${DATABASE_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -26,8 +23,21 @@ services:
     volumes:
       - redis_data:/data
 
+  app:
+    build: .
+    container_name: e-commerce-app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${DATABASE_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DATABASE_USERNAME}
+      SPRING_DATASOURCE_PASSWORD: ${DATABASE_PASSWORD}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
 
-# Declare named volumes here
 volumes:
   data:
   redis_data:
