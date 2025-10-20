@@ -1,6 +1,6 @@
 package com.josephus.e_commerce_backend_app.common.annotations;
 
-import com.example.todo_app.common.generators.UuidV7Generator;
+import com.josephus.e_commerce_backend_app.common.generators.UuidV7Generator;
 import org.hibernate.annotations.IdGeneratorType;
 
 import java.lang.annotation.ElementType;

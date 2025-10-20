@@ -2,14 +2,12 @@ package com.josephus.e_commerce_backend_app.common.services.impl;
 
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
-import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
-import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
+import com.josephus.e_commerce_backend_app.common.services.TokenCleanupService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDateTime;
 
 @Service
 public class TokenCleanupServiceImpl implements TokenCleanupService {
@@ -25,24 +23,10 @@ public class TokenCleanupServiceImpl implements TokenCleanupService {
     }
 
     private void cleanUpExpiredConfirmationTokens() {
-        List<ConfirmationToken> tokens = confirmationTokenRepository.findAll();
-        Date now = new Date();
-
-        for (ConfirmationToken token : tokens) {
-            if (token.getExpiryDate().before(now)) {
-                confirmationTokenRepository.delete(token);
-            }
-        }
+        confirmationTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
     }
 
     private void cleanUpExpiredPasswordResetTokens() {
-        List<PasswordResetToken> tokens = passwordResetTokenRepository.findAll();
-        Date now = new Date();
-
-        for (PasswordResetToken token : tokens) {
-            if (token.getExpiryDate().before(now)) {
-                passwordResetTokenRepository.delete(token);
-            }
-        }
+       passwordResetTokenRepository.deleteByExpiryDateBefore(LocalDateTime.now());
     }
 }

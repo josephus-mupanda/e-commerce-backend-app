@@ -1,7 +1,7 @@
 package com.josephus.e_commerce_backend_app.common.config;
 
-import com.example.todo_app.common.responses.GenericErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.josephus.e_commerce_backend_app.common.responses.GenericErrorResponse;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

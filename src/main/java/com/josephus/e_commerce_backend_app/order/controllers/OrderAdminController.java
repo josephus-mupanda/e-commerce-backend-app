@@ -48,7 +48,7 @@ public class OrderAdminController {
     @Operation(summary = "Get all orders", description = "Retrieve a list of all orders (Admin only).")
     public List<OrderDTO.Output> getAllOrders(@RequestHeader("Authorization") String token) {
         User admin = getAdminUser(token);
-        List<Order> orders = orderService.getAllOrders();
+        List<Order> orders = orderService.getOrders();
 
         userListener.logUserAction(admin, "Viewed all orders");
         logger.info("Admin '{}' viewed all orders", admin.getUsername());
@@ -66,7 +66,7 @@ public class OrderAdminController {
     @Operation(summary = "Get order by ID", description = "Retrieve a specific order by ID (Admin only).")
     public OrderDTO.Output getOrderById(@PathVariable String id, @RequestHeader("Authorization") String token) {
         User admin = getAdminUser(token);
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
 
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
@@ -89,13 +89,13 @@ public class OrderAdminController {
             @RequestHeader("Authorization") String token) {
 
         User admin = getAdminUser(token);
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
 
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
 
         order.setStatus(status);
-        Order updatedOrder = orderService.updateOrder(order);
+        Order updatedOrder = orderService.updateOrder(id,order);
 
         userListener.logUserAction(admin, "Updated order status for ID: " + id);
         logger.info("Admin '{}' updated order ID: {} to status '{}'", admin.getUsername(), id, status);
@@ -111,7 +111,7 @@ public class OrderAdminController {
     @Operation(summary = "Delete order", description = "Delete an order by ID (Admin only).")
     public void deleteOrder(@PathVariable String id, @RequestHeader("Authorization") String token) {
         User admin = getAdminUser(token);
-        Order order = orderService.getOrderById(id);
+        Order order = orderService.getOrder(id);
 
         if (order == null)
             throw new NotFoundException("Order not found with ID: " + id);
@@ -132,10 +132,19 @@ public class OrderAdminController {
         User user = userService.getUserFromToken(token);
         if (user == null)
             throw new UnauthorizedException("Invalid or expired token");
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> {
+                    try {
+                        // convert role name (String) to enum safely
+                        return UserType.valueOf(role.getName().toUpperCase()) == UserType.ADMIN;
+                    } catch (IllegalArgumentException e) {
+                        return false; // ignore roles not matching enum
+                    }
+                });
 
-        if (user.getRole() != UserType.ADMIN)
-            throw new ForbiddenException("Access denied: admin role required");
-
+        if (!isAdmin) {
+            throw new ForbiddenException("Access denied: Admins only");
+        }
         return user;
     }
 }

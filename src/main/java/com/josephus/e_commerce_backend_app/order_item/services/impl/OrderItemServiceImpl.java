@@ -19,23 +19,23 @@ public class OrderItemServiceImpl implements OrderItemService {
         return orderItemRepository.save(orderItem);
     }
     @Override
-    public OrderItem getOrderItem(Long orderItemId) {
+    public OrderItem getOrderItem(String orderItemId) {
         Optional<OrderItem> orderItemOptional = orderItemRepository.findById(orderItemId);
         return orderItemOptional.orElse(null);
     }
     @Override
-    public void deleteOrderItem(Long orderItemId) {
+    public void deleteOrderItem(String orderItemId) {
         orderItemRepository.deleteById(orderItemId);
     }
 
     @Override
-    public OrderItem updateOrderItem(Long id, OrderItem orderItem) {
+    public OrderItem updateOrderItem(String id, OrderItem orderItem) {
         orderItem.setId(id);
         return orderItemRepository.save(orderItem);
     }
 
     @Override
-    public List<OrderItem> getOrdersItemsByOrder(Long orderId) {
+    public List<OrderItem> getOrdersItemsByOrder(String orderId) {
         return orderItemRepository.findByOrderId(orderId);
     }
 }

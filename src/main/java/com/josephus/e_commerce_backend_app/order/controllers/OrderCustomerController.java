@@ -188,10 +188,19 @@ public class OrderCustomerController {
         User user = userService.getUserFromToken(token);
         if (user == null)
             throw new UnauthorizedException("Invalid or expired token");
+        boolean isCustomer = user.getRoles().stream()
+                .anyMatch(role -> {
+                    try {
+                        // convert role name (String) to enum safely
+                        return UserType.valueOf(role.getName().toUpperCase()) == UserType.CUSTOMER;
+                    } catch (IllegalArgumentException e) {
+                        return false; // ignore roles not matching enum
+                    }
+                });
 
-        if (user.getRole() != UserType.CUSTOMER)
-            throw new ForbiddenException("Access denied: customer role required");
-
+        if (!isCustomer) {
+            throw new ForbiddenException("Access denied: Customers only");
+        }
         return user;
     }
 }

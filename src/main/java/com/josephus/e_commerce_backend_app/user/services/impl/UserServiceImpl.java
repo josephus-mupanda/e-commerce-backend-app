@@ -16,6 +16,7 @@ import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
 import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,7 +48,7 @@ public class UserServiceImpl implements UserService {
                            AuthenticationManager authenticationManager,
                            JwtUtil jwtUtil,
                            ConfirmationTokenRepository confirmationTokenRepository,
-                           PasswordResetTokenRepository passwordResetTokenRepository, TokenRepository tokenRepository) {
+                           PasswordResetTokenRepository passwordResetTokenRepository, TokenRepository tokenRepository ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.bCryptPasswordEncoder = passwordEncoder;
@@ -69,10 +70,6 @@ public class UserServiceImpl implements UserService {
         return userRepository.findByEmail(email).isPresent();
     }
 
-    @Override
-    public Boolean hasUserWithPhoneNumber(String phoneNumber) {
-        return userRepository.findByPhoneNumber(phoneNumber).isPresent();
-    }
 
     // -------------------- LOAD USER --------------------
     @Override
@@ -120,12 +117,15 @@ public class UserServiceImpl implements UserService {
             Authentication auth = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(email, rawPassword)
             );
+
             if (auth.isAuthenticated()) {
                 User user = getUserByEmail(email);
                 return jwtUtil.generateToken(mapToIamUserDetails(user));
             }
         } catch (AuthenticationException ex) {
             return "Failed";
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
         return "Failed";
     }

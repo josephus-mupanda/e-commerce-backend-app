@@ -2,6 +2,7 @@ package com.josephus.e_commerce_backend_app.order.mappers;
 
 import com.josephus.e_commerce_backend_app.order.dtos.OrderDTO;
 import com.josephus.e_commerce_backend_app.order.models.Order;
+import com.josephus.e_commerce_backend_app.order_item.mappers.OrderItemMapper;
 
 import java.util.stream.Collectors;
 

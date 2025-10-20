@@ -23,7 +23,7 @@ public class SwaggerConfig {
     @Bean
     public GroupedOpenApi publicApi() {
         return GroupedOpenApi.builder()
-                .group("todo-public-apis")
+                .group("e-commerce-public-apis")
                 .pathsToMatch("/api/**")
                 .build();
     }

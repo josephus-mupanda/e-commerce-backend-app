@@ -29,5 +29,14 @@ public final class ProductMapper {
                 product.getCategory() != null ? product.getCategory().getId() : null
         );
     }
+    public static void updateEntity(Product product, ProductDTO.Input dto) {
+        if (product == null || dto == null) return;
+        product.setName(dto.name());
+        product.setDescription(dto.description());
+        product.setPrice(dto.price());
+        product.setQuantity(dto.quantity());
+        product.setImage(dto.image());
+        // category mapping should still be handled in service layer
+    }
 }
 

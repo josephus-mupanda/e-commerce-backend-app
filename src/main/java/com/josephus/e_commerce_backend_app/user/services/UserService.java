@@ -15,8 +15,6 @@ public interface UserService extends UserDetailsService {
 
     Boolean hasUserWithUsername(String username);
 
-    Boolean hasUserWithPhoneNumber(String phoneNumber);
-
     UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
 
     List<User> getAllUsers();

@@ -33,7 +33,7 @@ public class OrderItemCustomerController {
     // 🔹 Get all items of a specific order
     @IsAuthenticated
     @GetMapping("/order/{orderId}")
-    public ResponseEntity<List<OrderItemDTO.Output>> getOrderItemsByOrderId(@PathVariable Long orderId) {
+    public ResponseEntity<List<OrderItemDTO.Output>> getOrderItemsByOrderId(@PathVariable String orderId) {
         logger.info("Fetching order items for order ID: {}", orderId);
         List<OrderItem> items = orderItemService.getOrdersItemsByOrder(orderId);
 
@@ -52,12 +52,12 @@ public class OrderItemCustomerController {
     @IsAuthenticated
     @PostMapping("/add/{orderId}")
     public ResponseEntity<OrderItemDTO.Output> addOrderItem(
-            @PathVariable Long orderId,
+            @PathVariable String orderId,
             @RequestBody OrderItemDTO.Input input
     ) {
         logger.info("Adding order item for order ID: {}", orderId);
 
-        Product product = productService.getProductById(Long.valueOf(input.productId()));
+        Product product = productService.getProductById(input.productId());
         if (product == null) {
             throw new NotFoundException("Product with ID " + input.productId() + " not found.");
         }
@@ -81,7 +81,7 @@ public class OrderItemCustomerController {
     // 🔹 Optional: Delete an order item
     @IsAuthenticated
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteOrderItem(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteOrderItem(@PathVariable String id) {
         logger.info("Deleting order item with ID: {}", id);
 
         OrderItem orderItem = orderItemService.getOrderItem(id);

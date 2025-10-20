@@ -36,7 +36,7 @@ public class ProductCustomerController {
     @Operation(summary = "Get all products", description = "Retrieve all available products for customers")
     @PublicEndpoint
     public ResponseEntity<List<ProductDTO.Output>> getAllProducts(@RequestHeader("Authorization") String token) {
-        User user = userService.getAuthenticatedUser(token);
+        User user = userService.getUserFromToken(token);
 
         List<Product> products = productService.getAllProducts();
 
@@ -60,7 +60,7 @@ public class ProductCustomerController {
             @RequestHeader("Authorization") String token,
             @PathVariable String id
     ) {
-        User user = userService.getAuthenticatedUser(token);
+        User user = userService.getUserFromToken(token);
 
         Product product = productService.getProductById(id);
         if (product == null) {
@@ -79,7 +79,7 @@ public class ProductCustomerController {
             @RequestHeader("Authorization") String token,
             @PathVariable String name
     ) {
-        User user = userService.getAuthenticatedUser(token);
+        User user = userService.getUserFromToken(token);
 
         List<Product> products = productService.getProductsByCategoryName(name);
 

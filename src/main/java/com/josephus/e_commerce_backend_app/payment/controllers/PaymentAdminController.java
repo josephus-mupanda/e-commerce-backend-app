@@ -62,12 +62,14 @@ public class PaymentAdminController {
     @PostMapping
     public GenericResponse<PaymentDTO.Output> createPayment(
             @RequestBody PaymentDTO.Input paymentDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Payment payment = PaymentMapper.toEntity(paymentDTO);
         Payment created = paymentService.createPayment(payment);
+
 
         userListener.logUserAction(admin, "Created payment with ID: " + created.getId());
         return new GenericResponse<>("Payment created successfully", PaymentMapper.toDTO(created));
@@ -79,14 +81,15 @@ public class PaymentAdminController {
     public GenericResponse<PaymentDTO.Output> updatePayment(
             @PathVariable String id,
             @RequestBody PaymentDTO.Input paymentDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Payment existing = paymentService.getPaymentById(id);
         if (existing == null) throw new NotFoundException("Payment not found");
 
-        PaymentMapper.updateEntity(existing, paymentDTO);
+        existing.setPaymentMethod(paymentDTO.paymentMethod());
 
         Payment updated = paymentService.updatePayment(id, existing);
         userListener.logUserAction(admin, "Updated payment with ID: " + updated.getId());
@@ -99,9 +102,10 @@ public class PaymentAdminController {
     @DeleteMapping("/{id}")
     public GenericResponse<Void> deletePayment(
             @PathVariable String id,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = userService.getUserFromToken(token);
+        validateAdminAccess(admin);
 
         Payment existing = paymentService.getPaymentById(id);
         if (existing == null) throw new NotFoundException("Payment not found");
@@ -113,11 +117,22 @@ public class PaymentAdminController {
     }
 
     // ==================== HELPERS ====================
-    private User validateAdmin(String adminId) {
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserType.ADMIN) {
-            throw new ForbiddenException("Access denied");
+    private void validateAdminAccess(User user) {
+        if (user == null) {
+            throw new ForbiddenException("User not found or invalid token");
         }
-        return admin;
+
+        boolean isAdmin = user.getRoles().stream()
+                .anyMatch(role -> {
+                    try {
+                        return UserType.valueOf(role.getName().toUpperCase()) == UserType.ADMIN;
+                    } catch (IllegalArgumentException e) {
+                        return false;
+                    }
+                });
+
+        if (!isAdmin) {
+            throw new ForbiddenException("Access denied: Admins only");
+        }
     }
 }

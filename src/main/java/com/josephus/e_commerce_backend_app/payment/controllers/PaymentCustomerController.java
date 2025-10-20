@@ -37,8 +37,8 @@ public class PaymentCustomerController {
     @Operation(summary = "Get all payments", description = "Retrieve a list of all payments made by the authenticated customer")
     @PublicEndpoint
     public ResponseEntity<List<PaymentDTO.Output>> getAllPayments(@RequestHeader("Authorization") String token) {
-        User user = userService.getAuthenticatedUser(token);
-        List<Payment> payments = paymentService.getPaymentsByUser(user.getId());
+        User user = userService.getUserFromToken(token);
+        List<Payment> payments = paymentService.getAllPayments();
 
         if (payments.isEmpty()) {
             throw new NotFoundException("No payments found for this customer.");
@@ -58,9 +58,9 @@ public class PaymentCustomerController {
     @PublicEndpoint
     public ResponseEntity<PaymentDTO.Output> getPaymentById(
             @RequestHeader("Authorization") String token,
-            @PathVariable Long id
+            @PathVariable String id
     ) {
-        User user = userService.getAuthenticatedUser(token);
+        User user = userService.getUserFromToken(token);
         Payment payment = paymentService.getPaymentById(id);
 
         if (payment == null || !payment.getUser().getId().equals(user.getId())) {

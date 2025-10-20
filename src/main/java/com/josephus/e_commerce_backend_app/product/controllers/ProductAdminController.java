@@ -1,5 +1,6 @@
 package com.josephus.e_commerce_backend_app.product.controllers;
 
+import com.josephus.e_commerce_backend_app.common.enums.UserType;
 import com.josephus.e_commerce_backend_app.common.listeners.UserListener;
 import com.josephus.e_commerce_backend_app.product.dtos.ProductDTO;
 import com.josephus.e_commerce_backend_app.product.mappers.ProductMapper;
@@ -10,8 +11,6 @@ import com.josephus.e_commerce_backend_app.common.annotations.IsAuthenticated;
 import com.josephus.e_commerce_backend_app.common.responses.GenericResponse;
 import com.josephus.e_commerce_backend_app.common.exceptions.ForbiddenException;
 import com.josephus.e_commerce_backend_app.common.exceptions.NotFoundException;
-import com.josephus.e_commerce_backend_app.common.exceptions.BadRequestException;
-import com.josephus.e_commerce_backend_app.common.exceptions.InternalServerErrorException;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -67,17 +66,15 @@ public class ProductAdminController {
     @PostMapping
     public GenericResponse<ProductDTO.Output> createProduct(
             @RequestBody ProductDTO.Input productDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = validateAdmin(token);
 
         Product product = ProductMapper.toEntity(productDTO);
         try {
             product.setImage(optimizeImage(productDTO.image()));
         } catch (IOException e) {
-            throw new InternalServerErrorException("Error optimizing image");
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid image format");
+            throw new RuntimeException("Error optimizing image");
         }
 
         Product created = productService.createProduct(product);
@@ -86,15 +83,16 @@ public class ProductAdminController {
         return new GenericResponse<>("Product created successfully", ProductMapper.toDTO(created));
     }
 
+
     // ==================== UPDATE PRODUCT ====================
     @Operation(summary = "Update an existing product")
     @PutMapping("/{id}")
     public GenericResponse<ProductDTO.Output> updateProduct(
             @PathVariable String id,
             @RequestBody ProductDTO.Input productDTO,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = validateAdmin(token);
 
         Product existing = productService.getProductById(id);
         if (existing == null) throw new NotFoundException("Product not found");
@@ -104,9 +102,7 @@ public class ProductAdminController {
         try {
             existing.setImage(optimizeImage(productDTO.image()));
         } catch (IOException e) {
-            throw new InternalServerErrorException("Error optimizing image");
-        } catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid image format");
+            throw new RuntimeException("Error optimizing image");
         }
 
         Product updated = productService.updateProduct(id, existing);
@@ -120,9 +116,9 @@ public class ProductAdminController {
     @DeleteMapping("/{id}")
     public GenericResponse<Void> deleteProduct(
             @PathVariable String id,
-            @RequestHeader("X-Admin-Id") String adminId
+            @RequestHeader("Authorization") String token
     ) {
-        User admin = validateAdmin(adminId);
+        User admin = validateAdmin(token);
 
         Product existing = productService.getProductById(id);
         if (existing == null) throw new NotFoundException("Product not found");
@@ -134,10 +130,16 @@ public class ProductAdminController {
     }
 
     // ==================== HELPERS ====================
-    private User validateAdmin(String adminId) {
-        User admin = userService.getUserById(adminId);
-        if (admin == null || admin.getRole() != UserRole.ADMIN) {
-            throw new ForbiddenException("Access denied");
+    private User validateAdmin(String token) {
+        User admin = userService.getUserFromToken(token);
+        if (admin == null || admin.getRoles().stream().noneMatch(role -> {
+            try {
+                return UserType.valueOf(role.getName().toUpperCase()) == UserType.ADMIN;
+            } catch (IllegalArgumentException e) {
+                return false;
+            }
+        })) {
+            throw new ForbiddenException("Access denied: Admins only");
         }
         return admin;
     }

@@ -8,6 +8,6 @@ $env:PATH += ";C:\Program Files\Docker Toolbox"
 cd "C:\Users\josep\Development\My projects\e-commerce-backend-app"
 
 # Start Docker Compose
-docker-compose -f docker-compose.yml up -d
+docker-compose -f local-docker-compose.yml up -d
 
 Write-Host "Docker services started. You can now run Spring Boot."
