@@ -32,9 +32,9 @@ public class AuthController {
     private final UserListener userListener;
     private final UserMapper userMapper;
     private final EmailSenderService emailSenderService;
-    @Value("${frontend.base.url}")
+    @Value("${app.frontend-base-url}")
     private String url ;
-    @Value("${mail.admin.address}")
+    @Value("${application.users.admin.email}")
     private String adminEmail;
 
     @Autowired
