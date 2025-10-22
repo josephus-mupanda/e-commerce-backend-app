@@ -5,6 +5,7 @@ import com.josephus.e_commerce_backend_app.common.domains.Permission;
 import com.josephus.e_commerce_backend_app.common.domains.Role;
 import com.josephus.e_commerce_backend_app.common.domains.Token;
 import com.josephus.e_commerce_backend_app.common.enums.UserType;
+import com.josephus.e_commerce_backend_app.common.exceptions.BadRequestException;
 import com.josephus.e_commerce_backend_app.common.repositories.ConfirmationTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.PasswordResetTokenRepository;
 import com.josephus.e_commerce_backend_app.common.repositories.RoleRepository;
@@ -14,50 +15,29 @@ import com.josephus.e_commerce_backend_app.user.models.User;
 import com.josephus.e_commerce_backend_app.user.repositories.UserRepository;
 import com.josephus.e_commerce_backend_app.common.models.ConfirmationToken;
 import com.josephus.e_commerce_backend_app.common.models.PasswordResetToken;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder bCryptPasswordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
     private final ConfirmationTokenRepository confirmationTokenRepository;
     private final PasswordResetTokenRepository passwordResetTokenRepository;
     private final TokenRepository tokenRepository;
-
-    @Autowired
-    public UserServiceImpl(UserRepository userRepository,
-                           RoleRepository roleRepository,
-                           PasswordEncoder passwordEncoder,
-                           AuthenticationManager authenticationManager,
-                           JwtUtil jwtUtil,
-                           ConfirmationTokenRepository confirmationTokenRepository,
-                           PasswordResetTokenRepository passwordResetTokenRepository, TokenRepository tokenRepository ) {
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.bCryptPasswordEncoder = passwordEncoder;
-        this.authenticationManager = authenticationManager;
-        this.jwtUtil = jwtUtil;
-        this.confirmationTokenRepository = confirmationTokenRepository;
-        this.passwordResetTokenRepository = passwordResetTokenRepository;
-        this.tokenRepository = tokenRepository;
-    }
 
     // -------------------- USER CHECKS --------------------
     @Override
@@ -73,9 +53,13 @@ public class UserServiceImpl implements UserService {
 
     // -------------------- LOAD USER --------------------
     @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findFirstByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Username not found"));
+    public UserDetails loadUserByUsername(String usernameOrEmail) throws UsernameNotFoundException {
+        User user = userRepository.findFirstByUsername(usernameOrEmail)
+                .orElseGet(() -> userRepository.findByEmail(usernameOrEmail).orElse(null));
+
+        if (user == null) {
+            throw new UsernameNotFoundException("User not found with username/email: " + usernameOrEmail);
+        }
 
         Set<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
         Set<String> permissions = user.getRoles().stream()
@@ -102,6 +86,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(email);
         user.setPasswordHash(bCryptPasswordEncoder.encode(password));
         user.setEnabled(false);
+        user.setUserType(UserType.CUSTOMER);
 
         Role customerRole = roleRepository.findByName(UserType.CUSTOMER.name())
                 .orElseThrow(() -> new RuntimeException("Role CUSTOMER not found"));
@@ -114,30 +99,68 @@ public class UserServiceImpl implements UserService {
     @Override
     public String verify(String email, String rawPassword) {
         try {
-            Authentication auth = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(email, rawPassword)
-            );
-
-            if (auth.isAuthenticated()) {
-                User user = getUserByEmail(email);
-                return jwtUtil.generateToken(mapToIamUserDetails(user));
+            // Try to find user by username first, then by email
+            User user = getUserByUsername(email);
+            if (user == null) {
+                user = getUserByEmail(email); // If not found by username, try by email
             }
-        } catch (AuthenticationException ex) {
-            return "Failed";
+            // Check if password matches
+            if (!bCryptPasswordEncoder.matches(rawPassword, user.getPasswordHash())) {
+                return "Failed";
+            }
+            // Check if user is enabled
+            if (!user.getEnabled()) {
+                return "Failed - Email not confirmed";
+            }
+            return jwtUtil.generateToken(mapToIamUserDetails(user));   // Generate token
+
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            return "Failed";
         }
-        return "Failed";
     }
 
     @Override
     public void invalidateToken(String token) {
         // Store token in a blacklist table
         Token blacklistedToken = new Token();
-        blacklistedToken.setToken(token);
+        blacklistedToken.setToken(hashToken(token));
         blacklistedToken.setUserId(extractUserIdFromToken(token));
         blacklistedToken.setRevokedAt(LocalDateTime.now());
         tokenRepository.save(blacklistedToken);
+    }
+    @Override
+    public boolean isTokenBlacklisted(String token) {
+        return tokenRepository.existsByToken(hashToken(token));
+    }
+    @Override
+    public void validateTokenOrThrow(String token) {
+        if (token == null || token.isEmpty()) {
+            throw new BadRequestException("Token is missing");
+        }
+        User user = getUserFromToken(token);
+        if (user == null) {
+            throw new BadRequestException("Invalid token or user not found");
+        }
+        if (isTokenBlacklisted(token)) {
+            throw new BadRequestException("Token has been revoked");
+        }
+        // Check JWT validity
+        if (!jwtUtil.validateToken(token, mapToIamUserDetails(user))) {
+            throw new BadRequestException("Token is invalid or expired");
+        }
+    }
+    private String hashToken(String token) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hashedBytes = digest.digest(token.getBytes());
+            StringBuilder sb = new StringBuilder();
+            for (byte b : hashedBytes) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("Hashing algorithm not found", e);
+        }
     }
     @Override
     public User getUserByEmail(String email) {
@@ -200,10 +223,6 @@ public class UserServiceImpl implements UserService {
     public void deletePasswordResetToken(PasswordResetToken token) {
         passwordResetTokenRepository.delete(token);
     }
-    @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
 
     // -------------------- HELPER --------------------
     private IamUserDetails mapToIamUserDetails(User user) {
@@ -238,25 +257,22 @@ public class UserServiceImpl implements UserService {
         return userOptional.orElse(null);
     }
 
-
     // Helper to get userId from token
     private String extractUserIdFromToken(String token) {
         String email = jwtUtil.extractUsername(token);
         User user = getUserByEmail(email);
         return user != null ? user.getId() : null;
     }
-
     @Override
-    public User getUserFromToken(String bearerToken) {
-        if (bearerToken == null || !bearerToken.startsWith("Bearer ")) {
-            return null;
-        }
-        String token = bearerToken.substring(7); // remove "Bearer " prefix
-        String username = jwtUtil.extractUsername(token);
-        if (username == null) return null;
+    public User getUserFromToken(String token) {
+        if (token == null || token.isEmpty()) return null;
 
-        Optional<User> optionalUser = userRepository.findByEmail(username);
-        return optionalUser.orElse(null);
+        String usernameOrEmail = jwtUtil.extractUsername(token);
+        if (usernameOrEmail == null) return null;
+
+        User user = getUserByEmail(usernameOrEmail);
+        if (user == null) user = getUserByUsername(usernameOrEmail);
+
+        return user;
     }
-
 }
