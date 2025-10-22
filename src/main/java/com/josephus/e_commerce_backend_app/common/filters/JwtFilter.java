@@ -23,9 +23,6 @@ public class JwtFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
     @Autowired
     private @Lazy UserService userService;
-    @Autowired
-    private TokenBlacklistService tokenBlacklistService;
-
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request,
@@ -52,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if (tokenBlacklistService.isTokenBlacklisted(token)) {
+            if (userService.isTokenBlacklisted(token)) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token has been invalidated");
                 return;
             }
