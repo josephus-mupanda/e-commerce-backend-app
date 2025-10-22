@@ -4,8 +4,6 @@ import com.josephus.e_commerce_backend_app.common.annotations.PublicEndpoint;
 import com.josephus.e_commerce_backend_app.common.filters.JwtFilter;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
 import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -37,7 +35,6 @@ import java.util.stream.Stream;
 @EnableWebSecurity
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
-
     private static final String[] SWAGGER_WHITELIST = {
             "/swagger-ui/**",
             "/v3/api-docs/**",
@@ -88,7 +85,6 @@ public class SecurityConfig {
                 publicEndpoints.addAll(mappingInfo.getPatternValues());
             }
         }
-
         this.finalWhitelist = Stream.concat(
                 Arrays.stream(SWAGGER_WHITELIST),
                 publicEndpoints.stream()
@@ -102,7 +98,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider(
-            @Lazy UserService userService,  // Add @Lazy here
+            @Lazy UserService userService,
             PasswordEncoder passwordEncoder
     ) {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();

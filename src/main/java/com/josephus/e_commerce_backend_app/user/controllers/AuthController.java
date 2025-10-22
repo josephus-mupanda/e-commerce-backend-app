@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -89,9 +88,7 @@ public class AuthController {
         }
 
         userListener.logUserAction(loggedInUser, "LOGIN");
-
         AuthDTO.LoginResponse response = new AuthDTO.LoginResponse(token, loggedInUser.getUsername());
-
         return GenericResponse.ok("Login successful", response);
     }
 
@@ -148,9 +145,7 @@ public class AuthController {
         if (user == null) throw new NotFoundException("Email not found");
 
         PasswordResetToken token = userService.createPasswordResetToken(user);
-
         emailSenderService.sendEmail(user.getEmail(), "Reset your password", "Your reset code is: " + token.getToken());
-
         return GenericResponse.ok("Password reset code sent to email");
     }
 
