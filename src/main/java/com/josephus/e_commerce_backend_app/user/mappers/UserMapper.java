@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 public final class UserMapper {
     private UserMapper() {}
-
     public static User toEntity(UserDTO.Input dto) {
         if (dto == null) return null;
         User user = new User();
@@ -18,7 +17,6 @@ public final class UserMapper {
         user.setEnabled(dto.enabled());
         return user;
     }
-
     public static UserDTO.Output toDTO(User user) {
         if (user == null) return null;
         return new UserDTO.Output(

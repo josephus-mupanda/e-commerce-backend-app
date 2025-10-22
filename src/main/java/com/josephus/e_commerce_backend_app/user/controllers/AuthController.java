@@ -16,6 +16,7 @@ import com.josephus.e_commerce_backend_app.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -24,25 +25,23 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Endpoints for user registration, login, and account management")
 public class AuthController {
     private final UserService userService;
     private final UserListener userListener;
-    private final UserMapper userMapper;
     private final EmailSenderService emailSenderService;
     @Value("${app.frontend-base-url}")
     private String url ;
     @Value("${application.users.admin.email}")
     private String adminEmail;
-
-    @Autowired
-    public AuthController(UserService userService, UserListener userListener, UserMapper userMapper, EmailSenderService emailSenderService) {
-        this.userService = userService;
-        this.userListener = userListener;
-        this.userMapper = userMapper;
-        this.emailSenderService = emailSenderService;
-    }
+//    @Autowired
+//    public AuthController(UserService userService, UserListener userListener, EmailSenderService emailSenderService) {
+//        this.userService = userService;
+//        this.userListener = userListener;
+//        this.emailSenderService = emailSenderService;
+//    }
 
     // ==================== REGISTER ====================
     @PublicEndpoint
@@ -62,7 +61,7 @@ public class AuthController {
 
         userListener.logUserAction(user, "CREATE_USER");
 
-        UserDTO.Output  userDTO = userMapper.toDTO(user);
+        UserDTO.Output  userDTO = UserMapper.toDTO(user);
         return GenericResponse.created("User registered successfully", userDTO);
 
     }
@@ -79,9 +78,12 @@ public class AuthController {
         if ("Failed".equals(token)) {
             throw new UnauthorizedException("Invalid username or password");
         }
-
+        // Also update this to handle both username and email lookup
         User loggedInUser = userService.getUserByUsername(request.username());
-
+        if (loggedInUser == null) {
+            // Try by email if not found by username
+            loggedInUser = userService.getUserByEmail(request.username());
+        }
         if (!loggedInUser.getEnabled()) {
             throw new ForbiddenException("Email not confirmed");
         }
@@ -98,16 +100,21 @@ public class AuthController {
     @Operation(summary = "Logout a user")
     @PostMapping("/logout")
     public ResponseEntity<GenericResponse<String>> logout(
-            @RequestHeader("Authorization") String token
+            @RequestHeader("Authorization") String authHeader
     ) {
+        String token = authHeader;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7); // Remove "Bearer " prefix
+        }
         User user = userService.getUserFromToken(token);
         if (user == null) {
             throw new BadRequestException("Invalid token or user not found");
         }
+        // Validate before invalidating
+        userService.validateTokenOrThrow(token);
         // Add token to blacklist
         userService.invalidateToken(token);
         userListener.logUserAction(user, "LOGOUT");
-
         return GenericResponse.ok("Logged out successfully");
     }
 
