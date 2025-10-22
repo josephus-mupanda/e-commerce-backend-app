@@ -1,6 +1,5 @@
 package com.josephus.e_commerce_backend_app.common.filters;
 
-import com.josephus.e_commerce_backend_app.common.services.TokenBlacklistService;
 import com.josephus.e_commerce_backend_app.common.utils.JwtUtil;
 import com.josephus.e_commerce_backend_app.user.services.UserService;
 import io.micrometer.common.lang.NonNull;
